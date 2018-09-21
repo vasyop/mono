@@ -1,5 +1,5 @@
 concat(a,b){
-    
+
     for(i,0,len(b)){
         push(a,b[i])
     }
@@ -9,6 +9,7 @@ concat(a,b){
 
 main{
     
+    let list = [1,[2,[3,[4,0]]]]
     let str = 'asdaasd'
     let tree = [
         str,
@@ -28,7 +29,7 @@ main{
         0
     ]
 
-    tree[2] = [
+        tree[2] = [
         str,
         [
             str,
@@ -41,5 +42,6 @@ main{
             0
         ]
     ]
+    
     prints(concat('hello ','world!'))
 }
