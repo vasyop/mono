@@ -1,0 +1,45 @@
+concat(a,b){
+    
+    for(i,0,len(b)){
+        push(a,b[i])
+    }
+    
+    return a
+}
+
+main{
+    
+    let str = 'asdaasd'
+    let tree = [
+        str,
+        [
+            str,
+            [
+                str,
+                0,
+                0
+            ],
+            [
+                str,
+                0,
+                0
+            ]      
+        ],
+        0
+    ]
+
+    tree[2] = [
+        str,
+        [
+            str,
+            0,
+            0
+        ],
+        [
+            str,
+            0,
+            0
+        ]
+    ]
+    prints(concat('hello ','world!'))
+}

@@ -1,0 +1,39 @@
+lang{
+    Program = Func_def*
+    Func_def  = identifier "(" identifier? ("," identifier)* ")" Block
+    identifier = letter+ 
+    Block = "{" ListOf<Stmt, ""> "}"
+    Stmt
+        | ("let"|"const") identifier "=" Expression --decl
+        | "while" "(" Expression ")" Block --while
+        | "for" "(" identifier "," Expression "," Expression ")" Block --for
+        | "if" "(" Expression ")" Block Else_part? --if
+        | "return" Expression? --ret
+        | "break" --break
+        | "continue" --continue
+        | Expression --ExpressionStmt
+    Else_part = ("else if" "(" Expression ")" Block)* "else" Block
+    
+    Expression_list = ListOf<Expression, ",">
+    Expression = Or_expr ("||" Or_expr)*
+
+    Or_expr    = And_expr ("&&" And_expr)*
+    And_expr = Comparison_expr (("<" | ">" | "<=" | ">=") Comparison_expr)*
+    Comparison_expr   = Plus_expr (("+" | "-") Plus_expr)*
+    Plus_expr  = Times_expr (("*" | "/" | "%") Times_expr)*
+    Times_expr = ("-" | "!")? Final_expr
+
+    Final_expr
+        = L_val
+        | L_val ("++" | "--")
+        | L_val ("=" | "/=" | "*=" | "+=" | "-=" | "%=" ) assignment
+        | identifier "(" Expression_list ")" --fnCallExpr
+        | "(" Expression ")" --paranthsisExpr
+        | "[" Expression_list "]" --arrayInit
+        | ("0".."9")+  --nrLiteral
+        | "\""( ~"\""any)*"\"" --stringLiteral
+
+    L_val
+        = identifier
+        | identifier ("[" Expression "]")* --indexExpr
+}
