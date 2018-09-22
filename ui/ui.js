@@ -16,7 +16,7 @@
     let redoStack = []
     let cursolBlickTimerId
     const tokenTypeToColor = {
-        sumberLiteral: 'rgb(222, 58, 6)',
+        stringLiteral: 'rgb(222, 58, 6)',
         identifier: 'rgba(0, 0, 0, 1)',
         keyword: 'blue',
         numberLiteral: 'rgb(0, 156, 20)'
@@ -1236,10 +1236,21 @@
                     },
                     "physics": false,
                     nodes: {
-                        widthConstraint: 200
-                    },
-                    edges: {
-                        //smooth: {type: 'curvedCW', roundness: .1}
+                        labelHighlightBold: false,
+                        widthConstraint: 200,
+                        font: {
+                            face: 'arial',
+                            color: 'rgba(0, 0, 0, 0.847)',
+                            size: 14
+                        },
+                        color: {
+                            background: 'white',
+                            border: 'rgba(0, 0, 0, 0.347)',
+                            highlight: {
+                                background: 'white',
+                                border: 'rgba(0, 0, 0, 0.347)'
+                            }
+                        }
                     }
                 });
             }

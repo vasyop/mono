@@ -31,7 +31,7 @@ modules.parser = (sourceCode, type = 'Program') => {
         '(': parseParanthesis,
         '[': parseArrayInitializer,
         numberLiteral: parseNumberLiteral,
-        sumberLiteral: parseStringLiteral
+        stringLiteral: parseStringLiteral
     }
 
     // return the abstract syntax tree (AST) from the given text
@@ -482,7 +482,7 @@ modules.parser = (sourceCode, type = 'Program') => {
 
         let tokenInfo = currentToken
 
-        const literal = expect('sumberLiteral')
+        const literal = expect('stringLiteral')
         const arrayElementExpressions = literal.text.split('').map(ch => ({
             type: 'numberLiteral',
             text: ch.charCodeAt(0)

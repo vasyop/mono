@@ -63,7 +63,7 @@ modules.lexer = sourceCode => {
             strLiteral += consume()
         }
         consume()
-        return Token('sumberLiteral', strLiteral)
+        return Token('stringLiteral', strLiteral)
     }
 
     function isQuote() {
