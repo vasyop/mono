@@ -8,8 +8,11 @@ modules.executor = (sourceCode, io) => {
     //the todo stack will only contain functions and the data is shared between them through the magic of closures
     const todo = []
 
+    let nextHeapAddress = 10000000
+
     const globalScope = {
         '#heap': {},
+        '#getNextHeapAddress': _ => nextHeapAddress++,
         '#functions': {},
         '#io': io,
         '#todo': todo,

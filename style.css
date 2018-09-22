@@ -14,7 +14,7 @@
 .app {
     height: 100%;
     display: grid;
-    grid-template: auto / 2fr 4fr 1fr;
+    grid-template: auto / 4fr 4fr 3fr;
 }
 
 .app:focus {
@@ -191,14 +191,22 @@
     font-size: 13px;
 }
 
+.call-stack:not(:empty) {
+    border-top: 2px solid #0000004f;
+}
+
 .stack-frame {
-    margin: 4px;
+    margin: 12px;
     margin-bottom: 2px;
     box-shadow: 0px 2px 0px rgba(0, 0, 0, 0.32);
 }
 
 .stack-frame:first-child {
     margin-bottom: 6px;
+}
+
+.stack-frame:last-child {
+    padding-top: 12px;
 }
 
 .block-scope:not(:empty) {

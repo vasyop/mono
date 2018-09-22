@@ -40,7 +40,7 @@
     function cursorIsOnThisIdentifier(lineNumber, columnNumber, cursor) {
 
         try {
-            return declarationInfoEquals(declarationInfoMap[lineNumber][columnNumber], declarationInfoMap[cursor.lineNumber][cursor.columnNumber]) || declarationInfoEquals(declarationInfoMap[lineNumber][columnNumber], declarationInfoMap[cursor.lineNumber][cursor.columnNumber-1])
+            return declarationInfoEquals(declarationInfoMap[lineNumber][columnNumber], declarationInfoMap[cursor.lineNumber][cursor.columnNumber]) || declarationInfoEquals(declarationInfoMap[lineNumber][columnNumber], declarationInfoMap[cursor.lineNumber][cursor.columnNumber - 1])
         } catch (error) {
             return false
         }
@@ -309,7 +309,7 @@
     //hyperapp state, actions, view, components
 
     const state = {
-        code: getFromLocalStorageOr('code', ['']),
+        code: getFromLocalStorageOr('code', document.getElementById('sample-code').innerHTML.split('\n')),
         arrowLine: undefined,
         cursor: getFromLocalStorageOr('cursor', { lineNumber: 0, columnNumber: 0 }),
         selectionBase: undefined, //set below
@@ -468,6 +468,7 @@
             }
 
             if (isRunning()) {
+                alert("This action requires exiting debug mode.")
                 return
             }
 
@@ -882,7 +883,7 @@
         }
     }
 
-    const wired = app(state, actions, view, document.body)
+    const wired = app(state, actions, view, document.getElementById('root'))
 
     function view(state, actions) {
 
@@ -1022,7 +1023,7 @@
         return (state, actions) => h(
             'div', {
                 class: 'debugger-btn debugger-btn--play',
-                title: 'Run',
+                title: 'Run (F8)',
                 onclick: () => actions.debuggerCommand('play')
             },
             h('i', { class: 'material-icons' }, 'play_arrow')
@@ -1033,7 +1034,7 @@
         return (state, actions) => h(
             'div', {
                 class: 'debugger-btn debugger-btn--stop ' + (!isRunning() ? 'debugger-btn--grayed' : ''),
-                title: 'Stop',
+                title: 'Stop (F7)',
                 onclick: () => isRunning() && actions.debuggerCommand('stop')
             },
             h('i', { class: 'material-icons' }, 'stop')
@@ -1044,7 +1045,7 @@
         return (state, actions) => h(
             'div', {
                 class: 'debugger-btn',
-                title: 'Step Over',
+                title: 'Step Over (F10)',
                 onclick: () => actions.debuggerCommand('over')
             },
             h('i', { class: 'material-icons' }, 'trending_flat')
@@ -1055,7 +1056,7 @@
         return (state, actions) => h(
             'div', {
                 class: 'debugger-btn',
-                title: 'Step Into',
+                title: 'Step Into (F11)',
                 onclick: () => actions.debuggerCommand('into')
             },
             h('i', { class: 'material-icons step-into-btn' }, 'trending_flat')
@@ -1210,11 +1211,14 @@
         }
     }
 
-    const heapVisualizationData = {
-        nodes: new vis.DataSet([]),
-        edges: new vis.DataSet([])
-    }
+    let heapVisualizationData = HeapVisData()
 
+    function HeapVisData() {
+        return {
+            nodes: new vis.DataSet([]),
+            edges: new vis.DataSet([])
+        }
+    }
     let visNetwork
 
 
@@ -1243,10 +1247,18 @@
             return h('div', {
                 class: 'heap-area',
                 oncreate: injectVisualization,
-                onupdate: _ => {
+                onupdate: domEL => {
 
 
-                    if (isBlinkRender || !isRunning() || isLeftClickPressed) {
+                    if (isBlinkRender || isLeftClickPressed) {
+                        return
+                    }
+
+                    if (!isRunning()) {
+                        if (visNetwork) {
+                            heapVisualizationData = HeapVisData()
+                            injectVisualization(domEL)
+                        }
                         return
                     }
 

@@ -59,7 +59,10 @@
         return ret.reverse()
     }
 
-    function makeNumberLiteral(val) {
+    function makeNumberLiteral(val, tokenInfo) {
+        if (!Number.isSafeInteger(val)) {
+            throwWithInfo(val + ' is outside the allowed bounds of +- 9007199254740991', tokenInfo)
+        }
         return {
             "type": "numberLiteral",
             "text": val
@@ -70,6 +73,7 @@
         return {
             '#io': scope['#io'],
             '#heap': scope['#heap'],
+            '#getNextHeapAddress': scope['#getNextHeapAddress'],
             '#functions': scope['#functions'],
             '#todo': scope['#todo'],
             '#parent': parent && scope
@@ -83,7 +87,7 @@
         return !!natives[fnName]
     }
 
-    function executeNativeFn(tokenInfo, fnName, args, scope, todo) {
+    function executeNativeFn(tokenInfo, fnName, args, scope, todo, getNextHeapAddress) {
         if (!args.length) {
             args = [0]
         }
@@ -101,7 +105,7 @@
 
             scope['#io'].writeLine(out)
         } else if (fnName == 'readLine') {
-            const adr = findEmptyAdress(scope)
+            const adr = getNextHeapAddress()
             scope['#heap'][adr] = scope['#io'].readLine().split('').map(c => c.charCodeAt(0))
             retrn(adr)
         } else if (fnName == 'len') {
@@ -125,9 +129,6 @@
         }
     }
     let currentAddress = 10000000
-    function findEmptyAdress(scope) {
-        return currentAddress++
-    }
 
     function assignArrayValOrVal(tokenInfo, evaluate, varName, scope, indexExpressions, val) {
         lookupArrayValOrVal(tokenInfo, evaluate, varName, scope, indexExpressions, val)
@@ -216,7 +217,7 @@
         const cl = tokenInfo.currentLine.trim()
         const after = cl ? (', after parsing "' + cl + '"') : ''
 
-        throw Error(msg + ', line ' +tokenInfo.lineNr + after)
+        throw Error(msg + ', line ' + tokenInfo.lineNr + after)
     }
 
 
@@ -231,7 +232,6 @@
         inheritGlobals,
         isNativeFn,
         executeNativeFn,
-        findEmptyAdress,
         assignArrayValOrVal,
         lookupArrayValOrVal,
         todo,

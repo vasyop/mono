@@ -39,7 +39,7 @@
                 () => throwWithInfo('unrecognized unary operator', tokenInfo)
             ])
 
-            retrn(scope, makeNumberLiteral(Number(newVal)))
+            retrn(scope, makeNumberLiteral(Number(newVal), tokenInfo))
         }
 
         function binaryLeftToRightExpression() {
@@ -53,7 +53,7 @@
 
                 if (type == 'numberLiteral') {
 
-                    if (operator == '/' && text == 0) {
+                    if ((operator == '%' || operator == '/') && text == 0) {
                         throwWithInfo('connot divide ' + accum + ' by 0', tokenInfo)
                     }
 
@@ -68,7 +68,7 @@
                     operator = text
                 }
             }
-            retrn(scope, makeNumberLiteral(accum))
+            retrn(scope, makeNumberLiteral(accum, tokenInfo))
         }
 
     }
@@ -78,7 +78,7 @@
         todo(
             scope,
             () => lookupArrayValOrVal(tokenInfo, evaluate, text, scope, indexExpressions),
-            () => retrn(scope, makeNumberLiteral(getRet(scope)))
+            () => retrn(scope, makeNumberLiteral(getRet(scope), tokenInfo))
         )
     }
 
@@ -97,7 +97,7 @@
                 eval('newVal' + operator + calculatedExpression)
             },
             () => assignArrayValOrVal(tokenInfo, evaluate, identifier, scope, indexExpressions, newVal),
-            () => retrn(scope, makeNumberLiteral(getRet(scope)))
+            () => retrn(scope, makeNumberLiteral(getRet(scope), tokenInfo))
         )
     }
 
@@ -119,7 +119,7 @@
                     operator == '++' ? (identifierVal + 1) : (identifierVal - 1)
                 )
             },
-            () => retrn(scope, makeNumberLiteral(identifierVal))
+            () => retrn(scope, makeNumberLiteral(identifierVal, tokenInfo))
         )
     }
 
@@ -180,7 +180,8 @@
                     functionName,
                     argsExprs.map(e => e.text),
                     scope,
-                    scope['#todo']
+                    scope['#todo'],
+                    scope['#getNextHeapAddress']
                 )
 
             ]),
@@ -188,7 +189,7 @@
         )
 
         function retTask() {
-            retrn(scope, makeNumberLiteral(retTask.val));
+            retrn(scope, makeNumberLiteral(retTask.val, tokenInfo));
             retTask.listener && retTask.listener()
         }
         retTask.val = 0
@@ -309,7 +310,7 @@
             () => endVal = getRet(scope).text,
             () => {
 
-                if(startVal===endVal){
+                if (startVal === endVal) {
                     return
                 }
 
@@ -376,7 +377,7 @@
             scope,
             () => todoEvaluateExpressionList(scope, arrayElementExpressions, exprVals, evaluate),
             () => {
-                const adr = findEmptyAdress(scope)
+                const adr = scope['#getNextHeapAddress']()
                 scope['#heap'][adr] = exprVals.map(i => i.text)
                 retrn(scope, makeNumberLiteral(adr))
             }
