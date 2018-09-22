@@ -154,13 +154,21 @@
     function callExpression({ identifierName, args, tokenInfo, indexExpressions }, scope) {
 
         // either a[...][...](...) or func(...)
-        const isFunctionPointerCall = scope[identifierName] !== undefined
+        let isFunctionPointerCall
 
         const argsExprs = []
         const indexExprs = []
 
         todo(
             scope,
+            () => {
+                try {
+                    lookupArrayValOrVal(tokenInfo, evaluate, identifierName, scope)
+                    isFunctionPointerCall = true
+                } catch (error) {
+                    isFunctionPointerCall = false
+                }
+            },
             () => {
                 if (isFunctionPointerCall) {
                     lookupArrayValOrVal(tokenInfo, evaluate, identifierName, scope, indexExpressions)

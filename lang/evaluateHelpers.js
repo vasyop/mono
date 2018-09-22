@@ -122,6 +122,7 @@
         } else if (fnName == 'push') {
             const ar = lookUpArrayInHeap(tokenInfo, args[0], scope)
             ar.push(args[1])
+            retrn(args[0])
         } else {
             throw Error('this should never happen')
         }
