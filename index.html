@@ -8,43 +8,12 @@
 
 <body>
     <div id="root"></div>
-    <script id="sample-code" type="text/mono">main{
-    let todo = makeTask('learn mono')
-    addSubtask(todo,makeTask('expressions'))
-    addSubtask(todo,makeTask('statements'))
-    let functionsTask = makeTask('functions')
-    addSubtask(
-        functionsTask,
-        makeTask('the stack')
-    )
-    addSubtask(
-        functionsTask,
-        makeTask('the heap')
-    )
-    addSubtask(todo,functionsTask)
-    addSubtask(todo,makeTask('that`s it!'))
-    printTask(todo,0)
-}
-
-makeTask(taskDescription){
+    <script id="sample-code" type="text/mono">makeTask(taskDescription){
     return [ taskDescription ]
 }
 
 addSubtask(task,subtask){
     push(task,subtask)
-}
-
-printTask(task,depth){
-    prints(
-        addPaddingToTask(
-            task[0],
-            depth,
-            len(task)-1
-        )
-    )
-    for(i,1,len(task)){
-        printTask(task[i],depth+1)
-    }
 }
 
 addPaddingToTask(taskDescription,depth,hasChildren){
@@ -61,6 +30,37 @@ addPaddingToTask(taskDescription,depth,hasChildren){
         push(result,58)
     }
     return result
+}
+
+printTask(task,depth){
+    prints(
+        addPaddingToTask(
+            task[0],
+            depth,
+            len(task)-1
+        )
+    )
+    for(i,1,len(task)){
+        printTask(task[i],depth+1)
+    }
+}
+
+main{
+    let todo = makeTask('learn mono')
+    addSubtask(todo,makeTask('expressions'))
+    addSubtask(todo,makeTask('statements'))
+    let functionsTask = makeTask('functions')
+    addSubtask(
+        functionsTask,
+        makeTask('the stack')
+    )
+    addSubtask(
+        functionsTask,
+        makeTask('the heap')
+    )
+    addSubtask(todo,functionsTask)
+    addSubtask(todo,makeTask('that`s it!'))
+    printTask(todo,0)
 }</script>
     <script>
         modules = {}

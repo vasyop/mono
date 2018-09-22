@@ -63,10 +63,15 @@ modules.parser = (sourceCode, type = 'Program') => {
 
     function parseFunctionDeclaration() {
 
+        scopeHelper.newScope() // an artificial scope taht's not really there above the one created by parseBlock so that parameters are not declared on the global scope
+
         let tokenInfo = currentToken
 
         const funcNameIdentifier = expect('identifier')
         const functionName = currentFunc = funcNameIdentifier.text
+
+        scopeHelper.functionDeclaration(functionName, funcNameIdentifier)
+        fillDeclarationInfoMap(funcNameIdentifier)
 
         if (functionNames[functionName]) {
             throw Error('function "' + functionName + '" redefined on line ' + currentToken.lineNr)
@@ -98,8 +103,8 @@ modules.parser = (sourceCode, type = 'Program') => {
             block: parseBlock()
         }
 
-        scopeHelper.functionDeclaration(functionName, funcNameIdentifier)
-        fillDeclarationInfoMap(funcNameIdentifier)
+        scopeHelper.scopeEnd()
+
         return node
     }
 
@@ -421,11 +426,11 @@ modules.parser = (sourceCode, type = 'Program') => {
         return { ...identifier, tokenInfo }
     }
 
-    function fillDeclarationInfoMap(identifier){
+    function fillDeclarationInfoMap(identifier) {
         const declarationNode = scopeHelper.lookUpIdentifier(identifier.text)
-        let declarationInfo = declarationNode && { declarationLine: declarationNode.lineNr-1, declarationColumnStart: declarationNode.tokenStart, declarationColumnEnd: declarationNode.tokenEnd }
-        
-        if(declarationInfo){
+        let declarationInfo = declarationNode && { declarationLine: declarationNode.lineNr - 1, declarationColumnStart: declarationNode.tokenStart, declarationColumnEnd: declarationNode.tokenEnd }
+
+        if (declarationInfo) {
             const line = identifier.lineNr - 1
 
             declarationInfoMap[line] = declarationInfoMap[line] || {}

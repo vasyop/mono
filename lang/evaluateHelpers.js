@@ -128,7 +128,6 @@
             current.val = val
         }
     }
-    let currentAddress = 10000000
 
     function assignArrayValOrVal(tokenInfo, evaluate, varName, scope, indexExpressions, val) {
         lookupArrayValOrVal(tokenInfo, evaluate, varName, scope, indexExpressions, val)
