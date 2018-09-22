@@ -37,6 +37,46 @@
     const keys = Object.keys.bind(Object)
     const values = o => keys(o).map(k => o[k])
 
+    const scrollToLine = (nr, state) => {
+        nr = Number(nr)
+        if (isNaN(nr)) {
+            return
+        }
+        let targetTop = nr - 5
+        let targetBottom = nr + 5
+
+        if (targetTop < 0) {
+            targetTop = 0
+        }
+
+        if (targetBottom >= state.code.length) {
+            targetBottom = state.code.length - 1
+        }
+        document.querySelector('.code-editor > div:nth-child(' + (targetTop + 1) + ')').scrollIntoView()
+
+        const botTarget = document.querySelector('.code-editor > div:nth-child(' + (targetBottom + 1) + ')')
+        if (!isElementInViewport(botTarget)) {
+            botTarget.scrollIntoView()
+        }
+    }
+
+    function isElementInViewport(el) {
+
+        //special bonus for those using jQuery
+        if (typeof jQuery === "function" && el instanceof jQuery) {
+            el = el[0];
+        }
+
+        var rect = el.getBoundingClientRect();
+
+        return (
+            rect.top >= 0 &&
+            rect.left >= 0 &&
+            rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && /*or $(window).height() */
+            rect.right <= (window.innerWidth || document.documentElement.clientWidth) /*or $(window).width() */
+        );
+    }
+
     const isSomethingSelected = state => state.selectionBase.lineNumber != state.cursor.lineNumber || state.selectionBase.columnNumber != state.cursor.columnNumber
 
     function isOnSameIdentifierAsCursor(lineNumber, columnNumber, cursor) {
@@ -420,6 +460,7 @@
 
             setTimeout(() => callStackDomEl && (callStackDomEl.scrollTop = 0), 10)
 
+            scrollToLine(dbgr.getLine(), state)
             return {
                 ...state,
                 arrowLine: dbgr.getLine()
@@ -647,6 +688,7 @@
                     const info = declarationInfoMap[cursor.lineNumber][cursor.columnNumber]
                     cursor.lineNumber = info.declarationLine
                     cursor.columnNumber = info.declarationColumnStart
+                    scrollToLine(cursor.lineNumber, state)
                 } catch (error) {
                     // declarationmap is probably invalid or no declaration was found for current symbol
                 }

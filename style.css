@@ -146,7 +146,8 @@
 
 .text-section-letter {
     display: inline-block;
-    padding-top: 5px;
+    padding-top: 2px;
+    padding-bottom: 2px;
 }
 
 .text-section-letter--selected {
