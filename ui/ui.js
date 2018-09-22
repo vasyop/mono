@@ -37,7 +37,9 @@
     const keys = Object.keys.bind(Object)
     const values = o => keys(o).map(k => o[k])
 
-    function cursorIsOnThisIdentifier(lineNumber, columnNumber, cursor) {
+    const isSomethingSelected = state => state.selectionBase.lineNumber != state.cursor.lineNumber || state.selectionBase.columnNumber != state.cursor.columnNumber
+
+    function isOnSameIdentifierAsCursor(lineNumber, columnNumber, cursor) {
 
         try {
             return declarationInfoEquals(declarationInfoMap[lineNumber][columnNumber], declarationInfoMap[cursor.lineNumber][cursor.columnNumber]) || declarationInfoEquals(declarationInfoMap[lineNumber][columnNumber], declarationInfoMap[cursor.lineNumber][cursor.columnNumber - 1])
@@ -476,12 +478,11 @@
             //delete the current selection
             const deletionKeys = { 'Backspace': 1, 'Enter': 1 }
             const isDeletionKey = deletionKeys[key] || key.length == 1
-            const isSomethingSelected = state.selectionBase.lineNumber != state.cursor.lineNumber || state.selectionBase.columnNumber != state.cursor.columnNumber
             const skipDelWithCtrl = { 'c': 1, 'x': 1, 'z': 1, 'y': 1, 'g': 1, 'F12': 1 }
             const shouldSkipDeletingSelection = skipDelWithCtrl[keyToLower] && isCtrlPressed || isAltPressed
 
             let didDeleteSelection
-            if (didDeleteSelection = isDeletionKey && isSomethingSelected && !shouldSkipDeletingSelection) {
+            if (didDeleteSelection = isDeletionKey && isSomethingSelected(state) && !shouldSkipDeletingSelection) {
 
                 let prevLineWasNull
                 let i = -1
@@ -1142,7 +1143,7 @@
             let className = 'text-section-letter '
             if (isInSelection) {
                 className += ' text-section-letter--selected'
-            } else if (cursorIsOnThisIdentifier(lineNumber, columnNumber, state.cursor)) {
+            } else if (isOnSameIdentifierAsCursor(lineNumber, columnNumber, state.cursor) && !isSomethingSelected(state)) {
                 className += ' text-section-letter--highlighted'
             }
 

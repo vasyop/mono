@@ -41,7 +41,7 @@
 
             retrn(scope, makeNumberLiteral(Number(newVal), tokenInfo))
         }
-
+        
         function binaryLeftToRightExpression() {
 
             let accum = expressionList[0].text

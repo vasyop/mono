@@ -1,9 +1,16 @@
+@font-face {
+    font-family: 'Consolas';
+    src: url('Consolas.eot');
+    /* IE9 Compat Modes */
+    src:url('Consolas.ttf') format('truetype');
+}
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
     color: rgba(0, 0, 0, 0.747);
-    font-family: monospace;
+    font-family:Consolas;
 }
 
 *::selection {
@@ -90,8 +97,7 @@
 }
 
 .line-number-section {
-    font-size: 11px;
-    padding-right: 17px;
+    padding-right: 24px;
     display: inline-block;
     user-select: none;
 }
@@ -125,7 +131,6 @@
 }
 
 .text-section {
-    font-size: 12px;
     display: inline-block;
     /* clicking after the line should set the cursor to that line*/
     padding-right: 3000px;
@@ -141,6 +146,7 @@
 
 .text-section-letter {
     display: inline-block;
+    padding-top: 3px;
 }
 
 .text-section-letter--selected {
