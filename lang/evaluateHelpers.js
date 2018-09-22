@@ -27,17 +27,24 @@
         return arr[lastIndex]
     }
 
-    function lookupVar(tokenInfo, varName, scope, value) {
+    function lookupVar(tokenInfo, varName, scope, valueToSet) {
         let currentScope = scope
         while (currentScope[varName] === undefined && currentScope['#parent']) {
             currentScope = currentScope['#parent']
         }
-        const val = currentScope[varName]
-        if (val === undefined) {
+        const varVal = currentScope[varName]
+        
+        const functionWithThisName = scope['#functions'][varName]
+        if (varVal === undefined && !functionWithThisName) {
             throwWithInfo('Unknown variable "' + varName + '"', tokenInfo)
+        } else if (varVal === undefined && functionWithThisName) {
+            if (valueToSet !== undefined) {
+                throwWithInfo('Cannot assign number to function', tokenInfo)
+            }
+            return functionWithThisName.address
         }
-        if (value !== undefined) {
-            currentScope[varName] = value
+        if (valueToSet !== undefined) {
+            currentScope[varName] = valueToSet
         }
         return currentScope[varName]
     }
@@ -71,6 +78,7 @@
 
     function inheritGlobals(scope, parent) {
         return {
+            '#funcAddressToName': scope['#funcAddressToName'],
             '#io': scope['#io'],
             '#heap': scope['#heap'],
             '#getNextHeapAddress': scope['#getNextHeapAddress'],
@@ -223,9 +231,6 @@
 
     modules.evaluateHelpers = {
         throwWithInfo,
-        lookupArrayVal,
-        lookupVar,
-        lookUpArrayInHeap,
         immutableReverse,
         makeNumberLiteral,
         inheritGlobals,

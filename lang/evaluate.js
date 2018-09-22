@@ -1,6 +1,6 @@
 {
 
-    const { throwWithInfo, lookupArrayVal, lookupVar, lookUpArrayInHeap, immutableReverse, makeNumberLiteral, inheritGlobals, isNativeFn, executeNativeFn, findEmptyAdress, assignArrayValOrVal, lookupArrayValOrVal, todo, todoEvaluateExpressionList, retrn, getRet, assertIsScope, prop, match } = modules.evaluateHelpers
+    const { throwWithInfo, immutableReverse, makeNumberLiteral, inheritGlobals, isNativeFn, executeNativeFn, findEmptyAdress, assignArrayValOrVal, lookupArrayValOrVal, todo, todoEvaluateExpressionList, retrn, getRet, assertIsScope, prop, match } = modules.evaluateHelpers
 
 
     const evalFuncs = { leftToRightexpression, identifier, assignment, postfix, block, callExpression, return: evalReturn, variableDeclaration, if: evalIf, while: evalWhile, for: evalFor, arrayinitializer, break: evalBreakOrContinue, continue: evalBreakOrContinue }
@@ -41,7 +41,7 @@
 
             retrn(scope, makeNumberLiteral(Number(newVal), tokenInfo))
         }
-        
+
         function binaryLeftToRightExpression() {
 
             let accum = expressionList[0].text
@@ -151,20 +151,37 @@
         returnScopeTask.line = closingBraceLine
     }
 
-    function callExpression({ functionName, args, tokenInfo }, scope) {
+    function callExpression({ identifierName, args, tokenInfo, indexExpressions }, scope) {
+
+        // either a[...][...](...) or func(...)
+        const isFunctionPointerCall = scope[identifierName] !== undefined
 
         const argsExprs = []
+        const indexExprs = []
 
         todo(
             scope,
+            () => {
+                if (isFunctionPointerCall) {
+                    lookupArrayValOrVal(tokenInfo, evaluate, identifierName, scope, indexExpressions)
+                }
+            },
+            () => {
+                if (isFunctionPointerCall) {
+                    identifierName = scope['#funcAddressToName'][getRet(scope)]
+                    if (!identifierName) {
+                        throwWithInfo('no function found at address ' + getRet(scope), tokenInfo)
+                    }
+                }
+            },
             () => todoEvaluateExpressionList(scope, args, argsExprs, evaluate),
-            match(isNativeFn(functionName), [
+            match(isNativeFn(identifierName), [
 
                 [false, () => () => {
 
-                    const fn = scope['#functions'][functionName]
+                    const fn = scope['#functions'][identifierName]
                     if (!fn) {
-                        throwWithInfo('unknown function ' + functionName, tokenInfo)
+                        throwWithInfo('unknown function ' + identifierName, tokenInfo)
                     }
 
                     let i = 0
@@ -177,7 +194,7 @@
 
                 () => () => executeNativeFn(
                     tokenInfo,
-                    functionName,
+                    identifierName,
                     argsExprs.map(e => e.text),
                     scope,
                     scope['#todo'],

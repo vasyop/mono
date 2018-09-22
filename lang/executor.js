@@ -9,6 +9,7 @@ modules.executor = (sourceCode, io) => {
     const todo = []
 
     let nextHeapAddress = 10000000
+    const funcAddressToName = {}
 
     const globalScope = {
         '#heap': {},
@@ -17,11 +18,17 @@ modules.executor = (sourceCode, io) => {
         '#io': io,
         '#todo': todo,
         // if a task needs to return a something to its parent, it will set #ret
-        '#ret': undefined
+        '#ret': undefined,
+        '#funcAddressToName': funcAddressToName
     }
 
+
     const programAST = parse(sourceCode)
-    programAST.functions.forEach(fun => globalScope['#functions'][fun.functionName] = fun)
+    programAST.functions.forEach(fun => {
+        fun.address = nextHeapAddress++
+        funcAddressToName[fun.address] = fun.functionName
+        globalScope['#functions'][fun.functionName] = fun
+    })
 
     const mainCallAST = parse('main()', 'IdentifierExpression')
 

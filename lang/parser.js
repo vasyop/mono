@@ -370,6 +370,15 @@ modules.parser = (sourceCode, type = 'Program') => {
 
         fillDeclarationInfoMap(identifier)
 
+        // optional index expression?
+        const indexExpressions = []
+        while (maybeConsume('[')) {
+            let expr = parseArithmeticExpression()
+            expect(']')
+
+            indexExpressions.push(expr)
+        }
+
         // call expression?
         if (maybeConsume('(')) {
 
@@ -384,18 +393,10 @@ modules.parser = (sourceCode, type = 'Program') => {
             return {
                 tokenInfo,
                 type: 'callExpression',
-                functionName: identifier.text,
-                args
+                identifierName: identifier.text,
+                args,
+                indexExpressions
             }
-        }
-
-        // optional index expression?
-        const indexExpressions = []
-        while (maybeConsume('[')) {
-            let expr = parseArithmeticExpression()
-            expect(']')
-
-            indexExpressions.push(expr)
         }
 
         // next stuff is allowed with or without index expr
