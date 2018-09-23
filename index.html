@@ -8,7 +8,37 @@
 
 <body>
     <div id="root"></div>
-    <script id="sample-code" type="text/mono">makeTask(taskDescription) {
+    <script id="sample-code" type="text/mono">concat (items) {
+    let c = []
+    for(itemIndex, 0, len(items)){
+        for(i, 0, len(items[itemIndex])){
+            push(c, items[itemIndex][i])
+        }
+    }
+    return c
+}
+
+range (n) {
+    let ret = []
+    for (i, 0, n){
+        push(ret, i)
+    }
+    return ret
+}
+
+map (list, func) {
+    let ret = []
+    for(i, 0, len(list)) {
+        push(ret, func(list[i], i))
+    }
+    return ret
+}
+
+getSpace {
+    return 32
+}
+
+makeTask(taskDescription) {
     return [ taskDescription ]
 }
 
@@ -17,36 +47,34 @@ addSubtask(task, subtask) {
 }
 
 addPaddingToTask(taskDescription, depth, hasChildren) {
-    let result = []
-    for (i, 0, depth) {
-        for (i, 0, 4) {
-            push(result, 32)
-        }
-    }
-    for (i, 0, len(taskDescription)) {
-        push(result, taskDescription[i])
-    }
-    if (hasChildren){
+    
+    let result = concat([
+        map(range(depth * 4), getSpace),
+        taskDescription
+    ])
+    
+    if (hasChildren) {
         push(result, 58)
     }
+    
     return result
 }
 
-printTask(task,depth){
+printTask(task, depth){
     prints(
         addPaddingToTask(
             task[0],
             depth,
-            len(task)-1
+            len(task) - 1
         )
     )
     for (i, 1, len(task)) {
-        printTask(task[i], depth+1)
+        printTask(task[i], depth + 1)
     }
 }
 
 main {
-    
+
     let todo = makeTask('learn mono')
     addSubtask(todo, makeTask('expressions'))
     addSubtask(todo, makeTask('statements'))
@@ -59,9 +87,10 @@ main {
         functionsTask,
         makeTask('the heap')
     )
-    addSubtask(todo,functionsTask)
+    addSubtask(todo, functionsTask)
     addSubtask(todo, makeTask('that`s it!'))
     printTask(todo, 0)
+    
 }</script>
     <script>
         modules = {}
