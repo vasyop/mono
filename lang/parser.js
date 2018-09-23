@@ -429,7 +429,18 @@ modules.parser = (sourceCode, type = 'Program') => {
 
     function fillDeclarationInfoMap(identifier) {
         const declarationNode = scopeHelper.lookUpIdentifier(identifier.text)
-        let declarationInfo = declarationNode && { declarationLine: declarationNode.lineNr - 1, declarationColumnStart: declarationNode.tokenStart, declarationColumnEnd: declarationNode.tokenEnd }
+
+        if (declarationNode) {
+            declarationNode.usages = declarationNode.usages || []
+            declarationNode.usages.push(identifier)
+        }
+
+        let declarationInfo = declarationNode && {
+            declarationLine: declarationNode.lineNr - 1,
+            declarationColumnStart: declarationNode.tokenStart,
+            declarationColumnEnd: declarationNode.tokenEnd,
+            declarationNode
+        }
 
         if (declarationInfo) {
             const line = identifier.lineNr - 1

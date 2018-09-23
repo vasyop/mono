@@ -52,7 +52,10 @@
         if (targetBottom >= state.code.length) {
             targetBottom = state.code.length - 1
         }
-        document.querySelector('.code-editor > div:nth-child(' + (targetTop + 1) + ')').scrollIntoView()
+        const topTarget = document.querySelector('.code-editor > div:nth-child(' + (targetTop + 1) + ')')
+        if (!isElementInViewport(topTarget)) {
+            topTarget.scrollIntoView()
+        }
 
         const botTarget = document.querySelector('.code-editor > div:nth-child(' + (targetBottom + 1) + ')')
         if (!isElementInViewport(botTarget)) {
@@ -90,7 +93,10 @@
     }
 
     function declarationInfoEquals(info1, info2) {
-        return JSON.stringify(info1) === JSON.stringify(info2) && info1 !== undefined
+        return info1 && info2 &&
+            info1.declarationColumnEnd === info2.declarationColumnEnd &&
+            info1.declarationColumnStart === info2.declarationColumnStart &&
+            info1.declarationLine === info2.declarationLine
     }
 
     function makeLineColumnToTokenTypeMap(code) {
@@ -520,8 +526,8 @@
             //delete the current selection
             const deletionKeys = { 'Backspace': 1, 'Enter': 1 }
             const isDeletionKey = deletionKeys[key] || key.length == 1
-            const skipDelWithCtrl = { 'c': 1, 'x': 1, 'z': 1, 'y': 1, 'g': 1, 'F12': 1 }
-            const shouldSkipDeletingSelection = skipDelWithCtrl[keyToLower] && isCtrlPressed || isAltPressed
+            const skipDelWithCtrl = { 'c': 1, 'x': 1, 'z': 1, 'y': 1, 'g': 1, 'f12': 1 }
+            const shouldSkipDeletingSelection = skipDelWithCtrl[keyToLower] && isCtrlPressed || isAltPressed || keyToLower === 'f2'
 
             let didDeleteSelection
             if (didDeleteSelection = isDeletionKey && isSomethingSelected(state) && !shouldSkipDeletingSelection) {
@@ -684,9 +690,33 @@
                         code.splice(cursor.lineNumber + 1, 0, restOfLine)
                     }
                 }
+            } else if (key === 'F2') {
+                let declNode
+                try {
+                    declNode = declarationInfoMap[cursor.lineNumber][cursor.columnNumber].declarationNode
+
+                } catch (error) {
+
+                }
+                
+                if (declNode) {
+                    let newName
+                    do {
+                        newName = prompt('line?')
+                    } while (newName === '')
+
+                    if (newName !== null) { // null means user canceled
+                        shouldSetBaseToCursor = false
+                        for (const usage of values(declNode.usages)) {
+                            code[usage.lineNr - 1] = code[usage.lineNr - 1].substring(0, usage.tokenStart) + newName + code[usage.lineNr - 1].substring(usage.tokenEnd + 1)
+                        }
+                        if (state.cursor.columnNumber > state.code[state.cursor.lineNumber].length) {
+                            state.cursor.columnNumber = state.code[state.cursor.lineNumber].length
+                        }
+                    }
+                }
             } else if (key === 'F12' && isCtrlPressed) {
                 try {
-                    const info = declarationInfoMap[cursor.lineNumber][cursor.columnNumber]
                     cursor.lineNumber = info.declarationLine
                     cursor.columnNumber = info.declarationColumnStart
                     scrollToLine(cursor.lineNumber, state)
@@ -996,6 +1026,7 @@
                     keyPressed['Shift'] = e.shiftKey
                     keyPressed['Alt'] = e.altKey
                     keyPressed[e.key] = true
+
                     actions.handleKeyInEditor(e.key)
 
                     const ignored = {
@@ -1006,7 +1037,7 @@
                         'F7': 1,
                     }
 
-                    const ignoredWithCtrl = { 'g': 1, 'l': 1, 'F12': 1 }
+                    const ignoredWithCtrl = { 'g': 1, 'l': 1, 'F12': 1, 'F2': 1 }
 
                     if (ignored[e.key] || keyPressed['Control'] && ignoredWithCtrl[e.key]) {
                         e.preventDefault()
