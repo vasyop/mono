@@ -79,13 +79,14 @@
 
     const isSomethingSelected = state => state.selectionBase.lineNumber != state.cursor.lineNumber || state.selectionBase.columnNumber != state.cursor.columnNumber
 
-    function isOnSameIdentifierAsCursor(lineNumber, columnNumber, cursor) {
+    let declarationInfoMap
 
-        try {
-            return declarationInfoEquals(declarationInfoMap[lineNumber][columnNumber], declarationInfoMap[cursor.lineNumber][cursor.columnNumber]) || declarationInfoEquals(declarationInfoMap[lineNumber][columnNumber], declarationInfoMap[cursor.lineNumber][cursor.columnNumber - 1])
-        } catch (error) {
-            return false
-        }
+    function isOnSameIdentifierAsCursor(lineNumber, columnNumber, cursorLineNr, cursorColNr) {
+
+        return declarationInfoMap &&
+            declarationInfoMap[lineNumber] &&
+            declarationInfoMap[cursorLineNr] &&
+            declarationInfoEquals(declarationInfoMap[lineNumber][columnNumber], declarationInfoMap[cursorLineNr][cursorColNr])
     }
 
     function declarationInfoEquals(info1, info2) {
@@ -1029,7 +1030,6 @@
     }
     let lastCode
     let syntaxHighlightMap
-    let declarationInfoMap
 
     function Editor() {
         return (state, actions) => {
@@ -1166,6 +1166,7 @@
                 }
             }
             const isLineSelected = lineNumber + 1 === state.arrowLine
+            const isSmthSelected = isSomethingSelected(state)
             return h(
                 'pre', {
                     class: 'text-section ' + (isLineSelected ? 'text-section--highlight' : ''),
@@ -1174,66 +1175,94 @@
                     onmouseup: _ => isLeftClickPressed = false
 
                 },
-                lineText.split('').map((letter, i) => h(CodeLineTextSectionLetter, { letter, lineNumber, columnNumber: i, isLineSelected }))
+                lineText.split('').map((letter, i) => h(CodeLineTextSectionLetter, {
+                    letter,
+                    lineNumber,
+                    columnNumber: i,
+                    isLineSelected,
+                    isSmthSelected,
+                    isInSelection: isInsideSelection(lineNumber, i, state),
+                    cursorLineNr: state.cursor.lineNumber,
+                    cursorColNr: state.cursor.columnNumber,
+                    lineNrLength: state.code[lineNumber].length,
+                    isOnSameLineAsCursorAndCursorVisible: lineNumber == state.cursor.lineNumber && state.cursorVisible
+                }))
             )
         }
     }
+    const codeLineTextSectionLetterArgumentsCache = {}
+    const codeLineVirtualDomCache = {}
 
-    function CodeLineTextSectionLetter({ letter, lineNumber, columnNumber, isLineSelected }) {
-        return (state, actions) => {
-            const isInSelection = isInsideSelection(lineNumber, columnNumber, state)
-            let className = 'text-section-letter '
-            if (isInSelection) {
-                className += ' text-section-letter--selected'
-            } else if (isOnSameIdentifierAsCursor(lineNumber, columnNumber, state.cursor) && !isSomethingSelected(state)) {
-                className += ' text-section-letter--highlighted'
-            }
+    function CodeLineTextSectionLetter({ letter, lineNumber, columnNumber, isLineSelected, isSmthSelected, isInSelection, cursorLineNr, cursorColNr, isOnSameLineAsCursorAndCursorVisible, lineNrLength }) {
 
-            if (lineNumber == state.cursor.lineNumber && state.cursorVisible) {
-                if (columnNumber == state.cursor.columnNumber) {
-                    className += ' text-section-letter--cursor'
-                } else if (state.code[lineNumber].length == columnNumber + 1 && state.cursor.columnNumber == state.code[lineNumber].length) {
-                    className += ' text-section-letter--cursor--right'
-                }
-            }
+        const arg = arguments[0]
+        const oldArg = codeLineTextSectionLetterArgumentsCache[lineNumber + ' ' + columnNumber]
+        if (oldArg && arg.letter === oldArg.letter &&
+            arg.lineNumber === oldArg.lineNumber &&
+            arg.columnNumber === oldArg.columnNumber &&
+            arg.isLineSelected === oldArg.isLineSelected &&
+            arg.isSmthSelected === oldArg.isSmthSelected &&
+            arg.isInSelection === oldArg.isInSelection &&
+            arg.cursorLineNr === oldArg.cursorLineNr &&
+            arg.cursorColNr === oldArg.cursorColNr &&
+            arg.isOnSameLineAsCursorAndCursorVisible === oldArg.isOnSameLineAsCursorAndCursorVisible &&
+            arg.lineNrLength === oldArg.lineNrLength) {
 
-            const handler = (alsoBase, e, isDouble) => actions.setCursor({
-                lineNumber,
-                columnNumber,
-                isRightSide: isRightSideClick(e),
-                alsoBase,
-                isDouble
-            })
-            const tokenType = (isInSelection || isLineSelected || !syntaxHighlightMap[lineNumber]) ? 'whitespace' : syntaxHighlightMap[lineNumber][columnNumber]
-            return h(
-                'pre', {
-                    style: { color: tokenTypeToColor[tokenType] || '' },
-                    class: className,
-                    onmousedown: e => {
-                        const now = new Date().getTime()
-
-
-                        isLeftClickPressed = true
-                        e.stopPropagation() // prevent the line from capturing a non padding click
-                        if (now - lastmouseDownOnCodeLine < 300) {
-                            handler(true, e, true)
-                        } else {
-                            handler(true, e)
-                        }
-                        lastmouseDownOnCodeLine = now
-
-                    },
-                    onmousemove: e => {
-                        e.stopPropagation() // prevent the line from capturing a non padding click
-                        if (isLeftClickPressed) {
-                            handler(false, e)
-                        }
-                    },
-                    onmouseup: _ => isLeftClickPressed = false
-                },
-                letter
-            )
+            return codeLineVirtualDomCache[lineNumber + ' ' + columnNumber]
         }
+
+        codeLineTextSectionLetterArgumentsCache[lineNumber + ' ' + columnNumber] = arguments[0]
+        let className = 'text-section-letter '
+        if (isInSelection) {
+            className += ' text-section-letter--selected'
+        } else if (isOnSameIdentifierAsCursor(lineNumber, columnNumber, cursorLineNr, cursorColNr) && !isSmthSelected) {
+            className += ' text-section-letter--highlighted'
+        }
+
+        if (isOnSameLineAsCursorAndCursorVisible) {
+            if (columnNumber == cursorColNr) {
+                className += ' text-section-letter--cursor'
+            } else if (lineNrLength == columnNumber + 1 && cursorColNr == lineNrLength) {
+                className += ' text-section-letter--cursor--right'
+            }
+        }
+
+        const handler = (alsoBase, e, isDouble) => wired.setCursor({
+            lineNumber,
+            columnNumber,
+            isRightSide: isRightSideClick(e),
+            alsoBase,
+            isDouble
+        })
+        const tokenType = (isInSelection || isLineSelected || !syntaxHighlightMap[lineNumber]) ? 'whitespace' : syntaxHighlightMap[lineNumber][columnNumber]
+        return codeLineVirtualDomCache[lineNumber + ' ' + columnNumber] = h(
+            'pre', {
+                style: { color: tokenTypeToColor[tokenType] || '' },
+                class: className,
+                onmousedown: e => {
+                    const now = new Date().getTime()
+
+
+                    isLeftClickPressed = true
+                    e.stopPropagation() // prevent the line from capturing a non padding click
+                    if (now - lastmouseDownOnCodeLine < 300) {
+                        handler(true, e, true)
+                    } else {
+                        handler(true, e)
+                    }
+                    lastmouseDownOnCodeLine = now
+
+                },
+                onmousemove: e => {
+                    e.stopPropagation() // prevent the line from capturing a non padding click
+                    if (isLeftClickPressed) {
+                        handler(false, e)
+                    }
+                },
+                onmouseup: _ => isLeftClickPressed = false
+            },
+            letter
+        )
     }
 
     function DebuggerSection() {
