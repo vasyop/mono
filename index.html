@@ -8,27 +8,27 @@
 
 <body>
     <div id="root"></div>
-    <script id="sample-code" type="text/mono">concat (items) {
+    <script id="sample-code" type="text/mono">concat(items) {
     let c = []
-    for(itemIndex, 0, len(items)){
-        for(i, 0, len(items[itemIndex])){
+    for (itemIndex, 0, len(items)) {
+        for (i, 0, len(items[itemIndex])) {
             push(c, items[itemIndex][i])
         }
     }
     return c
 }
 
-range (n) {
+range(n) {
     let ret = []
-    for (i, 0, n){
+    for (i, 0, n) {
         push(ret, i)
     }
     return ret
 }
 
-map (list, func) {
+map(list, func) {
     let ret = []
-    for(i, 0, len(list)) {
+    for (i, 0, len(list)) {
         push(ret, func(list[i], i))
     }
     return ret
@@ -39,7 +39,7 @@ getSpace {
 }
 
 makeTask(taskDescription) {
-    return [ taskDescription ]
+    return [taskDescription]
 }
 
 addSubtask(task, subtask) {
@@ -49,9 +49,9 @@ addSubtask(task, subtask) {
 addPaddingToTask(taskDescription, depth, hasChildren) {
     
     let result = concat([
-        map(range(depth * 4), getSpace),
-        taskDescription
-    ])
+            map(range(depth * 4), getSpace), 
+            taskDescription
+        ])
     
     if (hasChildren) {
         push(result, 58)
@@ -60,11 +60,11 @@ addPaddingToTask(taskDescription, depth, hasChildren) {
     return result
 }
 
-printTask(task, depth){
+printTask(task, depth) {
     prints(
         addPaddingToTask(
-            task[0],
-            depth,
+            task[0], 
+            depth, 
             len(task) - 1
         )
     )
@@ -80,11 +80,11 @@ main {
     addSubtask(todo, makeTask('statements'))
     let functionsTask = makeTask('functions')
     addSubtask(
-        functionsTask,
+        functionsTask, 
         makeTask('the stack')
     )
     addSubtask(
-        functionsTask,
+        functionsTask, 
         makeTask('the heap')
     )
     addSubtask(todo, functionsTask)

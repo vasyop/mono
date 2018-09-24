@@ -710,7 +710,7 @@
                 if (declNode) {
                     let newName
                     do {
-                        newName = prompt('line?')
+                        newName = prompt('new name: ')
                     } while (newName === '')
 
                     if (newName !== null) { // null means user canceled
@@ -755,7 +755,7 @@
                     let nr
 
                     do {
-                        let promptVal = prompt('line?')
+                        let promptVal = prompt('line:')
                         if (promptVal === null) { // pressed cancel
                             promptVal = '' + (cursor.lineNumber + 1)
                         }
