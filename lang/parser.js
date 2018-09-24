@@ -6,7 +6,8 @@ modules.parser = (sourceCode, type = 'Program') => {
     const scopeHelper = modules.parserScopeHelper()
     const declarationInfoMap = {}
 
-    const functionNames = {} // keep track of the already declared functions
+    // keep track of the already declared functions
+    const functionNames = {}
 
     // nextToken is called until getting undefined (= the end of token stream)
     const nextToken = modules.lexer(sourceCode)
@@ -34,12 +35,44 @@ modules.parser = (sourceCode, type = 'Program') => {
         stringLiteral: parseStringLiteral
     }
 
+
+    // prettification stuff
+    const typeWithSpaceBeforeAndAfter = buildDictionary('!=,++,--,==,+=,-=,/=,%=,*=,==,>=,<=,||,&&,/*,*/,<,>,=,+,-,*,/,%', ',')
+
+    function buildDictionary(keywords, separator) {
+        return keywords.split(separator).reduce((ac, i) => (ac[i] = 1, ac), {})
+    }
+    const prettifiedLines = {}
+    const increaseTypes = {
+        '{': 1,
+        '[': 1,
+        '(': 1
+    }
+    const decreaseTypes = {
+        '}': 1,
+        ']': 1,
+        ')': 1
+    }
+    const typesWithSpaceBefore = Object.assign({
+        '{': 1,
+        '=': 1
+    }, typeWithSpaceBeforeAndAfter)
+    const typesWithSpaceAfter = Object.assign({
+        keyword: 1,
+        ',': 1,
+        '=': 1
+    }, typeWithSpaceBeforeAndAfter)
+    let indentationLevel = 0
+
+
+
     // return the abstract syntax tree (AST) from the given text
     const ret = eval('parse' + type)()
 
     return {
         ...ret,
-        declarationInfoMap
+        declarationInfoMap,
+        prettifiedLines
     }
 
 
@@ -495,7 +528,8 @@ modules.parser = (sourceCode, type = 'Program') => {
         let tokenInfo = currentToken
 
         const literal = expect('stringLiteral')
-        const arrayElementExpressions = literal.text.split('').map(ch => ({
+        const noQuotesText = literal.text.substr(1, literal.text.length - 2)
+        const arrayElementExpressions = noQuotesText.split('').map(ch => ({
             type: 'numberLiteral',
             text: ch.charCodeAt(0)
         }))
@@ -531,10 +565,63 @@ modules.parser = (sourceCode, type = 'Program') => {
         for (const expected of types) {
             if (currentToken && currentToken.type === expected) {
                 const ret = currentToken
+                prettifyBasedOnToken()
                 lastToken = currentToken
                 currentToken = nextToken()
                 return ret
             }
         }
+    }
+
+
+    // prettyfication
+
+    function prettifyBasedOnToken() {
+
+        if (!currentToken) { // last token
+            return
+        }
+
+        const { type, text } = currentToken
+
+        // decrease indentation level based on last token
+        if (decreaseTypes[text]) {
+            indentationLevel--
+        }
+
+        // inject whitespace
+        if (getCurrentLine() === undefined) {
+            injectWhitespace()
+        }
+
+        // inject space before if it's a certain type
+        if (typesWithSpaceBefore[type]) {
+            setCurrentLine(getCurrentLine() + ' ')
+        }
+
+        // write the actual token
+        setCurrentLine(getCurrentLine() + text)
+
+        // inject space after if it's a certain type
+        if (typesWithSpaceAfter[type]) {
+            setCurrentLine(getCurrentLine() + ' ')
+        }
+
+        // increase indentation level based on last token
+        if (increaseTypes[text]) {
+            indentationLevel++
+        }
+    }
+
+    function injectWhitespace() {
+        setCurrentLine([...Array(indentationLevel).keys()].map(k => '    ').join(''))
+    }
+
+    function getCurrentLine() {
+        return prettifiedLines[currentToken.lineNr]
+    }
+
+    function setCurrentLine(val) {
+        prettifiedLines[currentToken.lineNr] = val
     }
 }

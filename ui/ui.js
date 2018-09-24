@@ -4,7 +4,7 @@
 
 
 
-    // variables which don't need rerendering
+    // variables which don't need to be stored in the state
     let pasteEl
     let dbgr
     let callStackDomEl
@@ -15,6 +15,10 @@
     let undoStack = []
     let redoStack = []
     let cursolBlickTimerId
+    let lastCode
+    let syntaxHighlightMap
+    let declarationInfoMap
+    let prettifiedLines = {}
     const tokenTypeToColor = {
         stringLiteral: 'rgb(222, 58, 6)',
         identifier: 'rgba(0, 0, 0, 1)',
@@ -36,6 +40,12 @@
 
     const keys = Object.keys.bind(Object)
     const values = o => keys(o).map(k => o[k])
+
+    function clampCursorToLineEnd(state) {
+        if (state.cursor.columnNumber > state.code[state.cursor.lineNumber].length) {
+            state.cursor.columnNumber = state.code[state.cursor.lineNumber].length
+        }
+    }
 
     const scrollToLine = (nr, state) => {
         nr = Number(nr)
@@ -81,8 +91,6 @@
     }
 
     const isSomethingSelected = state => state.selectionBase.lineNumber != state.cursor.lineNumber || state.selectionBase.columnNumber != state.cursor.columnNumber
-
-    let declarationInfoMap
 
     function isOnSameIdentifierAsCursor(lineNumber, columnNumber, cursorLineNr, cursorColNr) {
 
@@ -698,7 +706,7 @@
                 } catch (error) {
 
                 }
-                
+
                 if (declNode) {
                     let newName
                     do {
@@ -717,12 +725,23 @@
                 }
             } else if (key === 'F12' && isCtrlPressed) {
                 try {
+                    const info = declarationInfoMap[cursor.lineNumber][cursor.columnNumber]
                     cursor.lineNumber = info.declarationLine
                     cursor.columnNumber = info.declarationColumnStart
                     scrollToLine(cursor.lineNumber, state)
                 } catch (error) {
                     // declarationmap is probably invalid or no declaration was found for current symbol
                 }
+
+            } else if (key == 'f' && isAltPressed) {
+                if (prettifiedLines) {
+                    keys(prettifiedLines).forEach(lineNr => {
+                        code[lineNr - 1] = prettifiedLines[lineNr]
+                    })
+                    shouldSetBaseToCursor = false
+                    clampCursorToLineEnd(state)
+                }
+
             } else if (key.length == 1 && isCtrlPressed) {
 
                 if (keyToLower == 'a') {
@@ -1038,8 +1057,9 @@
                     }
 
                     const ignoredWithCtrl = { 'g': 1, 'l': 1, 'F12': 1, 'F2': 1 }
+                    const ignoredWithAlt = { 'f': 1 }
 
-                    if (ignored[e.key] || keyPressed['Control'] && ignoredWithCtrl[e.key]) {
+                    if (ignored[e.key] || keyPressed['Control'] && ignoredWithCtrl[e.key] || keyPressed['Alt'] && ignoredWithAlt[e.key]) {
                         e.preventDefault()
                     }
 
@@ -1059,8 +1079,6 @@
             h(OutputSection)
         )
     }
-    let lastCode
-    let syntaxHighlightMap
 
     function Editor() {
         return (state, actions) => {
@@ -1068,10 +1086,16 @@
             if (lastCode !== currentCode) {
                 try {
                     syntaxHighlightMap = makeLineColumnToTokenTypeMap(currentCode)
-                    declarationInfoMap = modules.parser(currentCode).declarationInfoMap
-                } catch (error) {
+                    const parsed = modules.parser(currentCode)
+                    declarationInfoMap = parsed.declarationInfoMap
+                    prettifiedLines = parsed.prettifiedLines
 
+                } catch (error) {
+                    // some parsing error, don't even attempt to show incorrect declarations or prettify based on old data
+                    declarationInfoMap = undefined
+                    prettifiedLines = undefined
                 }
+
                 lastCode = currentCode
             }
             return h(

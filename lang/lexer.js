@@ -19,7 +19,7 @@ modules.lexer = sourceCode => {
         '!=,++,--,==,+=,-=,/=,%=,*=,==,>=,<=,||,&&,/*,*/',
         ','
     )
-
+    
     const checkerTokenMatcherPair = [
         [isUndefined, getUndefined],
         [isLetter, getIdentifierOrKeyword],
@@ -58,11 +58,11 @@ modules.lexer = sourceCode => {
 
     function getStringLiteral() {
         consume()
-        let strLiteral = ''
+        let strLiteral = "'"
         while (!isQuote() && sourceCode[i] !== undefined) {
             strLiteral += consume()
         }
-        consume()
+        strLiteral += consume()
         return Token('stringLiteral', strLiteral)
     }
 
