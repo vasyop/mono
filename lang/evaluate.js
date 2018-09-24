@@ -1,6 +1,6 @@
 {
 
-    const { throwWithInfo, immutableReverse, makeNumberLiteral, inheritGlobals, isNativeFn, executeNativeFn, findEmptyAdress, assignArrayValOrVal, lookupArrayValOrVal, todo, todoEvaluateExpressionList, retrn, getRet, assertIsScope, prop, match } = modules.evaluateHelpers
+    const { throwWithInfo, immutableReverse, makeNumberLiteral, inheritGlobals, isNativeOrStdLibFn, executeNativeFn, findEmptyAdress, assignArrayValOrVal, lookupArrayValOrVal, todo, todoEvaluateExpressionList, retrn, getRet, assertIsScope, prop, match } = modules.evaluateHelpers
 
 
     const evalFuncs = { leftToRightexpression, identifier, assignment, postfix, block, callExpression, return: evalReturn, variableDeclaration, if: evalIf, while: evalWhile, for: evalFor, arrayinitializer, break: evalBreakOrContinue, continue: evalBreakOrContinue }
@@ -183,7 +183,7 @@
                 }
             },
             () => todoEvaluateExpressionList(scope, args, argsExprs, evaluate),
-            () => match(isNativeFn(identifierName), [
+            () => match(isNativeOrStdLibFn(identifierName), [
 
                 [false, () => {
 

@@ -3,7 +3,7 @@
 
 modules.parser = (sourceCode, type = 'Program') => {
 
-    const isNativeFn = modules.evaluateHelpers.isNativeFn
+    const isNativeOrStdLibFn = modules.evaluateHelpers.isNativeOrStdLibFn
     const scopeHelper = modules.parserScopeHelper()
     const declarationInfoMap = {}
 
@@ -104,8 +104,8 @@ modules.parser = (sourceCode, type = 'Program') => {
         const funcNameIdentifier = expect('identifier')
         const functionName = currentFunc = funcNameIdentifier.text
 
-        if (isNativeFn(functionName)) {
-            throw Error('redefinition of native function "' + functionName + '" not allowed on line ' + currentToken.lineNr)
+        if (isNativeOrStdLibFn(functionName)) {
+            throw Error('redefinition of native or standard function "' + functionName + '" not allowed on line ' + currentToken.lineNr)
         }
 
         scopeHelper.functionDeclaration(functionName, funcNameIdentifier)

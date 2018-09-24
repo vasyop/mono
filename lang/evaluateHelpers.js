@@ -93,16 +93,32 @@
         return 'printa,print,prints,len,push,readLine'.split(',')
     }
 
-    function isNativeFn(fnName) {
-        const natives = getNativeFunctionNames().reduce((acc, item) => (acc[item] = 1, acc), {})
-        return !!natives[fnName]
+    function getStdLibFunctionNames() {
+        return Object.keys(modules.stdlib)
+    }
+
+    const nativeOrStdlib = getNativeFunctionNames().concat(getStdLibFunctionNames()).reduce((acc, item) => (acc[item] = 1, acc), {})
+
+    function isNativeOrStdLibFn(fnName) {
+        return !!nativeOrStdlib[fnName]
     }
 
     function executeNativeFn(tokenInfo, fnName, args, scope, todo, getNextHeapAddress) {
         if (!args.length) {
             args = [0]
         }
-        if (fnName == 'print') {
+        if (modules.stdlib[fnName]) {
+
+            const result = modules.stdlib[fnName](args, adr => lookUpArrayInHeap(tokenInfo, adr, scope), scope, msg => throwWithInfo(msg, tokenInfo))
+
+            if (result instanceof Array) {
+                const adr = getNextHeapAddress()
+                scope['#heap'][adr] = result
+                retrn(adr)
+            } else {
+                retrn(result)
+            }
+        } else if (fnName == 'print') {
             scope['#io'].writeLine.apply(this, args.map(a => String(a)))
         } else if (fnName == 'prints' || fnName == 'printa') {
             const ar = lookUpArrayInHeap(tokenInfo, args[0], scope)
@@ -238,7 +254,7 @@
         immutableReverse,
         makeNumberLiteral,
         inheritGlobals,
-        isNativeFn,
+        isNativeOrStdLibFn,
         executeNativeFn,
         assignArrayValOrVal,
         lookupArrayValOrVal,
