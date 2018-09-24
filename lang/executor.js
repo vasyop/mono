@@ -10,13 +10,14 @@ modules.executor = (sourceCode, io) => {
 
     let nextHeapAddress = 10000000
     const funcAddressToName = {}
-
+    const nativeFnNameToAddress = {}
     const globalScope = {
         '#heap': {},
         '#getNextHeapAddress': _ => nextHeapAddress++,
         '#functions': {},
         '#io': io,
         '#todo': todo,
+        '#nativeFnNameToAddress': nativeFnNameToAddress,
         // if a task needs to return a something to its parent, it will set #ret
         '#ret': undefined,
         '#funcAddressToName': funcAddressToName
@@ -24,6 +25,12 @@ modules.executor = (sourceCode, io) => {
 
 
     const programAST = parse(sourceCode)
+
+    modules.evaluateHelpers.getNativeFunctionNames().forEach(nativeFnName => {
+        nativeFnNameToAddress[nativeFnName] = { address: nextHeapAddress++ }
+        funcAddressToName[nextHeapAddress - 1] = nativeFnName
+    })
+
     programAST.functions.forEach(fun => {
         fun.address = nextHeapAddress++
         funcAddressToName[fun.address] = fun.functionName

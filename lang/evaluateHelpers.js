@@ -33,8 +33,8 @@
             currentScope = currentScope['#parent']
         }
         const varVal = currentScope[varName]
-        
-        const functionWithThisName = scope['#functions'][varName]
+
+        const functionWithThisName = scope['#functions'][varName] || scope['#nativeFnNameToAddress'][varName]
         if (varVal === undefined && !functionWithThisName) {
             throwWithInfo('Unknown variable "' + varName + '"', tokenInfo)
         } else if (varVal === undefined && functionWithThisName) {
@@ -84,14 +84,17 @@
             '#getNextHeapAddress': scope['#getNextHeapAddress'],
             '#functions': scope['#functions'],
             '#todo': scope['#todo'],
-            '#parent': parent && scope
+            '#parent': parent && scope,
+            '#nativeFnNameToAddress': scope['#nativeFnNameToAddress']
         }
     }
 
-
+    function getNativeFunctionNames() {
+        return 'printa,print,prints,len,push,readLine'.split(',')
+    }
 
     function isNativeFn(fnName) {
-        const natives = 'printa,print,prints,len,push,readLine'.split(',').reduce((acc, item) => (acc[item] = 1, acc), {})
+        const natives = getNativeFunctionNames().reduce((acc, item) => (acc[item] = 1, acc), {})
         return !!natives[fnName]
     }
 
@@ -245,7 +248,8 @@
         getRet,
         assertIsScope,
         prop,
-        match
+        match,
+        getNativeFunctionNames
     }
 
 }

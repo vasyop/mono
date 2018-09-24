@@ -183,9 +183,9 @@
                 }
             },
             () => todoEvaluateExpressionList(scope, args, argsExprs, evaluate),
-            match(isNativeFn(identifierName), [
+            () => match(isNativeFn(identifierName), [
 
-                [false, () => () => {
+                [false, () => {
 
                     const fn = scope['#functions'][identifierName]
                     if (!fn) {
@@ -200,7 +200,7 @@
 
                 }],
 
-                () => () => executeNativeFn(
+                () => executeNativeFn(
                     tokenInfo,
                     identifierName,
                     argsExprs.map(e => e.text),
