@@ -220,6 +220,7 @@
         retTask.val = 0
         retTask.type = 'return'
         retTask.noInherit = true
+        retTask.tokenInfo = tokenInfo
     }
 
     function evalReturn({ expression }, scope) {

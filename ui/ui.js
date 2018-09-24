@@ -17,6 +17,7 @@
     let cursolBlickTimerId
     let lastCode
     let syntaxHighlightMap
+    let functionNameToLineNr
     let declarationInfoMap
     let prettifiedLines = {}
     const tokenTypeToColor = {
@@ -451,7 +452,6 @@
                     dbgr = modules.debugger(state.code.join('\n'), {
                         readLine: () => prompt('Your input:') || '',
                         writeLine: writeToOutputScreen
-
                     })
 
                     for (const bpLine in state.breakPoints) {
@@ -469,8 +469,18 @@
                 handlers[cmd]()
 
             } catch (error) {
+
                 setTimeout(() => isRunning() && actions.debuggerCommand('stop'))
-                return { ...state, errorText: error.message }
+
+                const stackTrace = dbgr && dbgr.getScopes() && dbgr.getScopes()[0] && dbgr.getScopes()[0].scope['#todo']
+                    .filter(task => task.name === 'retTask')
+                    .slice(1)
+                    .map(t => t.tokenInfo)
+                    .reverse()
+                    .map(info => 'at ' + info.text + ', line ' + info.lineNr)
+                    .join('\n') || ''
+
+                return { ...state, errorText: error.message + '\n' + stackTrace }
             }
 
             setTimeout(() => callStackDomEl && (callStackDomEl.scrollTop = 0), 10)
@@ -534,7 +544,7 @@
             //delete the current selection
             const deletionKeys = { 'Backspace': 1, 'Enter': 1 }
             const isDeletionKey = deletionKeys[key] || key.length == 1
-            const skipDelWithCtrl = { 'c': 1, 'x': 1, 'z': 1, 'y': 1, 'g': 1, 'f12': 1 }
+            const skipDelWithCtrl = { 'c': 1, 'x': 1, 'z': 1, 'y': 1, 'g': 1, 'f': 1, 'f12': 1 }
             const shouldSkipDeletingSelection = skipDelWithCtrl[keyToLower] && isCtrlPressed || isAltPressed || keyToLower === 'f2'
 
             let didDeleteSelection
@@ -750,6 +760,16 @@
                     state.selectionBase.columnNumber = 0
                     state.cursor.lineNumber = state.code.length - 1
                     state.cursor.columnNumber = state.code[state.code.length - 1].length
+                } else if (keyToLower == 'f') {
+                    if (functionNameToLineNr) {
+                        const fnStart = prompt('function name: ')
+                        if (fnStart) {
+                            const fn = keys(functionNameToLineNr).find(k => k.toLowerCase().indexOf(fnStart.toLowerCase()) !== -1)
+                            scrollToLine(functionNameToLineNr[fn], state)
+                            cursor.lineNumber = functionNameToLineNr[fn] - 1
+                            cursor.columnNumber = 0
+                        }
+                    }
                 } else if (keyToLower == 'g') {
 
                     let nr
@@ -913,12 +933,14 @@
             } else if (key == 'End') {
                 if (isCtrlPressed) {
                     cursor.lineNumber = code.length - 1
+                    scrollToLine(cursor.lineNumber, state)
                 }
                 cursor.columnNumber = code[cursor.lineNumber].length
                 shouldSetBaseToCursor = !isShiftPressed
             } else if (key == 'Home') {
                 if (isCtrlPressed) {
                     cursor.lineNumber = 0
+                    scrollToLine(cursor.lineNumber, state)
                 }
                 cursor.columnNumber = 0
                 shouldSetBaseToCursor = !isShiftPressed
@@ -1056,7 +1078,7 @@
                         'F7': 1,
                     }
 
-                    const ignoredWithCtrl = { 'g': 1, 'l': 1, 'F12': 1, 'F2': 1 }
+                    const ignoredWithCtrl = { 'f': 1, 'g': 1, 'l': 1, 'F12': 1, 'F2': 1 }
                     const ignoredWithAlt = { 'f': 1 }
 
                     if (ignored[e.key] || keyPressed['Control'] && ignoredWithCtrl[e.key] || keyPressed['Alt'] && ignoredWithAlt[e.key]) {
@@ -1089,11 +1111,13 @@
                     const parsed = modules.parser(currentCode)
                     declarationInfoMap = parsed.declarationInfoMap
                     prettifiedLines = parsed.prettifiedLines
+                    functionNameToLineNr = parsed.functionNameToLineNr
 
                 } catch (error) {
                     // some parsing error, don't even attempt to show incorrect declarations or prettify based on old data
                     declarationInfoMap = undefined
                     prettifiedLines = undefined
+                    functionNameToLineNr = undefined
                 }
 
                 lastCode = currentCode

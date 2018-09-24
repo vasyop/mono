@@ -8,26 +8,37 @@
 
 <body>
     <div id="root"></div>
-    <script id="sample-code" type="text/mono">printTask(taskNode, depth) {
-    prints(concat([repeat(32, depth * 4), taskNode[0]]))
-    for (i, 1, len(taskNode)) {
-        printTask(taskNode[i], depth + 1)
+    <script id="sample-code" type="text/mono">Person(name, age, sub) {
+    return [name, age, sub || []]
+}
+
+getHirarchy {
+    return Person('John', 35, [
+        Person('Jane', 25), 
+        Person('Bob', 18, [
+            Person('Rick', 44)
+        ]), 
+        Person('Anna', 21)
+    ])
+}
+
+flatten(hierarchy, flat) {
+    push(flat, hierarchy)
+    for (i, 0, len(hierarchy[2])) {
+        flatten(hierarchy[2][i], flat)
     }
 }
 
+isUnder30(person) { return person[1] < 30 }
+getName(person) { return person[0] }
+byAge(p1, p2) { return p2 - p1 }
+
 main {
-    let todo = [
-        'learn mono', 
-        ['expressions'], 
-        ['statements'], 
-        [
-            'functions', 
-            ['the stack'], 
-            ['the heap']
-        ], 
-        ['that`s it!']
-    ]
-    printTask(todo, 0)
+    let people = []
+    flatten(getHirarchy(), people)
+    let under30 = filter(people, isUnder30)
+    let namesByAge = map(sort(under30, byAge), getName)
+    map(namesByAge, prints)
 }</script>
     <script>
         modules = {}

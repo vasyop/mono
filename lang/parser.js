@@ -8,7 +8,7 @@ modules.parser = (sourceCode, type = 'Program') => {
     const declarationInfoMap = {}
 
     // keep track of the already declared functions
-    const functionNames = {}
+    const functionNameToLineNr = {}
 
     // nextToken is called until getting undefined (= the end of token stream)
     const nextToken = modules.lexer(sourceCode)
@@ -18,7 +18,6 @@ modules.parser = (sourceCode, type = 'Program') => {
 
     let currentFunc
 
-    // a few constants
     const statementKeywordToParseFunction = {
         let: parseDeclaration,
         return: parseReturnStatement,
@@ -64,6 +63,8 @@ modules.parser = (sourceCode, type = 'Program') => {
         '=': 1
     }, typeWithSpaceBeforeAndAfter)
     let indentationLevel = 0
+    const parensStack = []
+    const indentModifierOnLine = {}
 
 
 
@@ -73,7 +74,8 @@ modules.parser = (sourceCode, type = 'Program') => {
     return {
         ...ret,
         declarationInfoMap,
-        prettifiedLines
+        prettifiedLines,
+        functionNameToLineNr
     }
 
 
@@ -111,10 +113,10 @@ modules.parser = (sourceCode, type = 'Program') => {
         scopeHelper.functionDeclaration(functionName, funcNameIdentifier)
         fillDeclarationInfoMap(funcNameIdentifier)
 
-        if (functionNames[functionName]) {
+        if (functionNameToLineNr[functionName] !== undefined) {
             throw Error('function "' + functionName + '" redefined on line ' + currentToken.lineNr)
         } else {
-            functionNames[functionName] = true
+            functionNameToLineNr[functionName] = currentToken.lineNr
         }
 
         const paramNames = []
@@ -587,11 +589,13 @@ modules.parser = (sourceCode, type = 'Program') => {
             return
         }
 
-        const { type, text } = currentToken
+        const { type, text, lineNr } = currentToken
+        indentModifierOnLine[lineNr] = indentModifierOnLine[lineNr] || 0
 
         // decrease indentation level based on last token
         if (decreaseTypes[text]) {
-            indentationLevel--
+            indentModifierOnLine[lineNr] && indentModifierOnLine[lineNr]-- // don't let if fall below 0, like in case of '} else if () {', ignore the '}'
+            indentationLevel += parensStack.pop()
         }
 
         // inject whitespace
@@ -600,7 +604,10 @@ modules.parser = (sourceCode, type = 'Program') => {
         }
 
         // inject space before if it's a certain type
-        if (typesWithSpaceBefore[type]) {
+        if (typesWithSpaceBefore[type] ||
+            lastToken && lastToken.type === '{' && lastToken.lineNr === lineNr ||
+            lastToken && lastToken.lineNr === lineNr && type == '}'
+        ) {
             setCurrentLine(getCurrentLine() + ' ')
         }
 
@@ -614,7 +621,22 @@ modules.parser = (sourceCode, type = 'Program') => {
 
         // increase indentation level based on last token
         if (increaseTypes[text]) {
-            indentationLevel++
+            if (indentModifierOnLine[lineNr]) { // already increased the indent level once, not gonna do it again
+                if (parensStack.length) {
+                    // the first closing char will fix that ogirinal push(-1)
+                    const last = parensStack.pop()
+                    parensStack.push(0)
+                    parensStack.push(last)
+                } else {
+                    parensStack.push(0)
+                }
+            } else {
+                // in case of a fn declaration, the indent level is set to 1 than 0 then 1 again: "fn(){"
+                // if it's back to 0 at any point, indentationLevel must increase
+                indentationLevel++
+                parensStack.push(-1)
+                indentModifierOnLine[lineNr]++
+            }
         }
     }
 

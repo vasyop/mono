@@ -44,6 +44,78 @@
 
     }
 
+    function slice(args, lookupArray, scope, throwWithInfo) {
+        if (args.length !== 2 && args.length !== 3) {
+            throwWithInfo('std function map requires two or three arguments')
+        }
+        const [_array, begin, end] = args
+        const array = lookupArray(_array)
+
+        return array.slice(begin, end)
+
+    }
+
+    function sort(args, lookupArray, scope, throwWithInfo) {
+        if (args.length !== 2 && args.length !== 1) {
+            throwWithInfo('std function sort requires one or two arguments')
+        }
+        const [_array, comparer] = args
+        const array = lookupArray(_array)
+        return array.sort(comparer === undefined ? undefined : (a, b) => evalFuncUtil(scope, comparer, [a, b]))
+
+    }
+
+    function eq(args, lookupArray, scope, throwWithInfo) {
+        if (args.length !== 2) {
+            throwWithInfo('std function eq requires two arguments')
+        }
+        const [_array, _array2] = args
+        const array = lookupArray(_array)
+        const array2 = lookupArray(_array2)
+
+        return array.toString() === array2.toString() ? 1 : 0
+
+    }
+
+    function filter(args, lookupArray, scope, throwWithInfo) {
+        if (args.length !== 2) {
+            throwWithInfo('std function filter requires two arguments')
+        }
+        const [_array, filter] = args
+        const array = lookupArray(_array)
+
+        return array.filter((item, i) => {
+            const ret = evalFuncUtil(scope, filter, [item, i])
+            return ret
+        })
+
+    }
+
+    function indexOf(args, lookupArray, scope, throwWithInfo) {
+        if (args.length !== 2) {
+            throwWithInfo('std function indexOf requires two arguments')
+        }
+        const [_array, item] = args
+        const array = lookupArray(_array)
+
+        return array.indexOf(item)
+
+    }
+
+    function reduce(args, lookupArray, scope, throwWithInfo) {
+        if (args.length !== 3) {
+            throwWithInfo('std function function requires two arguments')
+        }
+        const [_array, reducer, initValue] = args
+        const array = lookupArray(_array)
+
+        return array.reduce((acc, item) => {
+            const ret = evalFuncUtil(scope, reducer, [acc, item])
+            return ret
+        }, initValue)
+
+    }
+
     function evalFuncUtil(scope, fnAdr, args) {
 
         const fnName = scope['#funcAddressToName'][fnAdr]
@@ -69,5 +141,11 @@ modules.stdlib = {
     range,
     concat,
     map,
-    repeat
+    repeat,
+    reduce,
+    filter,
+    indexOf,
+    eq,
+    slice,
+    sort
 }
