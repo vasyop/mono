@@ -242,7 +242,10 @@
 .heap-descriptor {
     display: inline-block;
     cursor: pointer;
+}
 
+.heap-descriptor.val-changed {
+    color:red;
 }
 
 .editable-variable-val {

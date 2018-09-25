@@ -22,6 +22,7 @@
     let prettifiedLines = {}
     let debuggerActionIndex = 0
     const lastVariableValueCache = {}
+    const lastArrayValueCache = {}
     const tokenTypeToColor = {
         stringLiteral: 'rgb(222, 58, 6)',
         identifier: 'rgba(0, 0, 0, 1)',
@@ -1565,12 +1566,12 @@
 
         let className = 'editable-variable-val '
 
-        const cacheKeyCurrentDebuggerIndex = debuggerActionIndex + '@' + funcName + '@' + funcIndex + '@' + blockScopeIndex + '@' + name
+        const cacheKeyCurrentDebuggerIndex = debuggerActionIndex + '@' + funcName + '@' + funcIndex  + '@' + name
         if (val !== lastVariableValueCache[cacheKeyCurrentDebuggerIndex]) {
             className += 'editable-variable-val--changed'
         }
 
-        const cacheKeyForNextDebuggerIndex = (debuggerActionIndex + 1) + '@' + funcName + '@' + funcIndex + '@' + blockScopeIndex + '@' + name
+        const cacheKeyForNextDebuggerIndex = (debuggerActionIndex + 1) + '@' + funcName + '@' + funcIndex  + '@' + name
         lastVariableValueCache[cacheKeyForNextDebuggerIndex] = val
 
         return h('div', {
@@ -1585,9 +1586,17 @@
 
         const heap = dbgr.getHeap()
         const text = heap[val] && ('-> ' + formatHeapArray(heap[val]))
+        let className = 'heap-descriptor '
+
+        const cacheKeyCurrentDebuggerIndex = debuggerActionIndex + '@' + funcName + '@' + funcIndex  + '@' + name
+        const cacheKeyForNextDebuggerIndex = (debuggerActionIndex + 1) + '@' + funcName + '@' + funcIndex  + '@' + name
+        if (text !== lastArrayValueCache[cacheKeyCurrentDebuggerIndex]) {
+            className += 'val-changed'
+        }
+        lastArrayValueCache[cacheKeyForNextDebuggerIndex] = text
 
         return h('div', {
-                class: 'heap-descriptor',
+                className,
                 onclick: _ => {
                     visNetwork.unselectAll()
                     visNetwork.selectNodes([val])
