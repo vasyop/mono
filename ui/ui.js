@@ -20,6 +20,8 @@
     let functionNameToLineNr
     let declarationInfoMap
     let prettifiedLines = {}
+    let debuggerActionIndex = 0
+    const lastVariableValueCache = {}
     const tokenTypeToColor = {
         stringLiteral: 'rgb(222, 58, 6)',
         identifier: 'rgba(0, 0, 0, 1)',
@@ -130,6 +132,15 @@
         }
 
         return map
+    }
+
+    function formatHeapArray(array, withNewLine) {
+        const maybeString = array.length && array.every(item => item > 31 && item <= 127 || item === 10)
+        let strformat = maybeString ? '("' + String.fromCharCode.apply(String, array) + '")' : ''
+        if (withNewLine) {
+            strformat = '\n' + strformat
+        }
+        return '[' + array + '] ' + strformat
     }
 
     // returns a reduced heap that starts only from the local variables of the function on the top of the call stack
@@ -439,6 +450,8 @@
             return { ...state }
         },
         debuggerCommand: cmd => (state, actions) => {
+
+            debuggerActionIndex++
 
             if (!isRunning()) {
                 state.outputText = ''
@@ -1052,6 +1065,7 @@
                 }
             }
         }
+
         return h('div', {
                 class: 'app',
                 tabIndex: 0,
@@ -1504,63 +1518,70 @@
                     class: 'call-stack',
                     oncreate: el => callStackDomEl = el
                 },
-                blockScopeGroups.map(blockScopes => h(StackFrame, { blockScopes }))
+                blockScopeGroups.map((blockScopes, funcIndex) => h(StackFrame, { blockScopes, funcIndex }))
             )
         }
     }
 
-    function StackFrame({ blockScopes }) {
-        return (state, actions) => {
-            return h(
-                'div', { class: 'stack-frame' },
-                blockScopes[0].funcName + ':',
-                blockScopes.reverse().map(blockScope => h(BlockScope, { blockScope }))
-            )
-        }
+    function StackFrame({ blockScopes, funcIndex }) {
+        return h(
+            'div', { class: 'stack-frame' },
+            blockScopes[0].funcName + ':',
+            blockScopes.reverse().map((blockScope, blockScopeIndex) => h(BlockScope, { blockScope, funcName: blockScopes[0].funcName, funcIndex, blockScopeIndex }))
+        )
     }
 
-    function BlockScope({ blockScope }) {
-        return (state, actions) => {
-            const variables = keys(blockScope.scope).filter(k => !k.startsWith('#'))
-            if (!variables.length) {
-                return
-            }
-            return h('div', { class: 'block-scope' },
-                variables.map((v, i) => h(VariableNameAndValue, { name: v, val: blockScope.scope[v], blockScope }))
-            )
+    function BlockScope({ blockScope, funcName, funcIndex, blockScopeIndex }) {
+        const variables = keys(blockScope.scope).filter(k => !k.startsWith('#'))
+        if (!variables.length) {
+            return
         }
+        return h('div', { class: 'block-scope' },
+            variables.map((v, i) => h(VariableNameAndValue, { name: v, val: blockScope.scope[v], blockScope, funcName, funcIndex, blockScopeIndex }))
+        )
     }
 
-    function VariableNameAndValue({ name, val, blockScope }) {
+    function VariableNameAndValue({ name, val, blockScope, funcName, funcIndex, blockScopeIndex }) {
         return h('div', {},
             h(
                 'div', { title: name, class: 'block-scope-section' },
                 name + ' : ',
-                h(VariableVal, { val, blockScope, name })
+                h(VariableVal, { val, blockScope, name, funcName, funcIndex, blockScopeIndex })
             ),
             h('br')
         )
     }
 
-    function formatHeapArray(array, withNewLine) {
-        const maybeString = array.length && array.every(item => item > 31 && item <= 127 || item === 10)
-        let strformat = maybeString ? '("' + String.fromCharCode.apply(String, array) + '")' : ''
-        if (withNewLine) {
-            strformat = '\n' + strformat
-        }
-        return '[' + array + '] ' + strformat
-    }
-
-    function VariableVal({ val, blockScope, name }) {
+    function VariableVal({ val, blockScope, name, funcName, funcIndex, blockScopeIndex }) {
 
         return h('div', { class: 'variable-value' },
-            h(EditableVariableValue, { val, blockScope, name }),
+            h(EditableVariableValue, { val, blockScope, name, funcName, funcIndex, blockScopeIndex }),
             ' ',
-            h(HeapDescriptor, { val, blockScope, name })
+            h(HeapDescriptor, { val, name, funcName, funcIndex, blockScopeIndex })
         )
     }
 
-    function HeapDescriptor({ val, blockScope, name }) {
+    function EditableVariableValue({ val, blockScope, name, funcName, funcIndex, blockScopeIndex }) {
+
+        let className = 'editable-variable-val '
+
+        const cacheKeyCurrentDebuggerIndex = debuggerActionIndex + '@' + funcName + '@' + funcIndex + '@' + blockScopeIndex + '@' + name
+        if (val !== lastVariableValueCache[cacheKeyCurrentDebuggerIndex]) {
+            className += 'editable-variable-val--changed'
+        }
+
+        const cacheKeyForNextDebuggerIndex = (debuggerActionIndex + 1) + '@' + funcName + '@' + funcIndex + '@' + blockScopeIndex + '@' + name
+        lastVariableValueCache[cacheKeyForNextDebuggerIndex] = val
+
+        return h('div', {
+            title: 'Change this variable',
+            class: className,
+            onclick: _ => wired.changeVariableValue({ val, blockScope, name })
+        }, val)
+    }
+
+
+    function HeapDescriptor({ val, name, funcName, funcIndex, blockScopeIndex }) {
 
         const heap = dbgr.getHeap()
         const text = heap[val] && ('-> ' + formatHeapArray(heap[val]))
@@ -1570,19 +1591,10 @@
                 onclick: _ => {
                     visNetwork.unselectAll()
                     visNetwork.selectNodes([val])
-                    //visNetwork.focus(val, { animation: { duration: 1000, easingFunction: 'easeInOutQuad' } })
                 }
             },
             text
         )
-    }
-
-    function EditableVariableValue({ val, blockScope, name }) {
-        return h('div', {
-            title: 'Change this variable',
-            class: 'editable-variable-val',
-            onclick: _ => wired.changeVariableValue({ val, blockScope, name })
-        }, val)
     }
 
     function OutputSection() {
