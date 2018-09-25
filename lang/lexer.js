@@ -8,7 +8,7 @@ modules.lexer = sourceCode => {
     let currentLine = ''
     let lastTokenStart = 0
 
-    const singleCharTokens = buildDictionary(',<>[](){}=+-*/%!', '')
+    const singleCharTokens = buildDictionary('~,<>[](){}=+-*/%!', '')
 
     const keywords = buildDictionary(
         'let,for,break,continue,const,if,while,return,else',

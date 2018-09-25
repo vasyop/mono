@@ -3,7 +3,7 @@
     const { throwWithInfo, immutableReverse, makeNumberLiteral, inheritGlobals, isNativeOrStdLibFn, executeNativeFn, findEmptyAdress, assignArrayValOrVal, lookupArrayValOrVal, todo, todoEvaluateExpressionList, retrn, getRet, assertIsScope, prop, match } = modules.evaluateHelpers
 
 
-    const evalFuncs = { leftToRightexpression, identifier, assignment, postfix, block, callExpression, return: evalReturn, variableDeclaration, if: evalIf, while: evalWhile, for: evalFor, arrayinitializer, break: evalBreakOrContinue, continue: evalBreakOrContinue }
+    const evalFuncs = { leftToRightexpression, identifier, assignment, postfix, block, callExpression, return: evalReturn, variableDeclaration, if: evalIf, while: evalWhile, for: evalFor, arrayinitializer, break: evalBreakOrContinue, continue: evalBreakOrContinue, lambdaExpresssion }
 
     modules.evaluate = evaluate
 
@@ -129,6 +129,11 @@
         const nextTodo = todoAr[todoAr.length - 1]
 
         const blockScope = inheritGlobals(scope, !(nextTodo && nextTodo.noInherit))
+
+        if (scope['#functions'][currentFunc].lambdaParentScope) {
+            blockScope['#parent'] = scope['#functions'][currentFunc].lambdaParentScope
+        }
+
         nextTodo && nextTodo.argVals && Object.assign(blockScope, nextTodo.argVals)
 
         todo(
@@ -406,6 +411,20 @@
                 const adr = scope['#getNextHeapAddress']()
                 scope['#heap'][adr] = exprVals.map(i => i.text)
                 retrn(scope, makeNumberLiteral(adr))
+            }
+        )
+    }
+
+    function lambdaExpresssion(fun, scope) {
+
+        todo(
+            scope,
+            () => {
+                fun.address = scope['#getNextHeapAddress']()
+                scope['#funcAddressToName'][fun.address] = fun.functionName
+                scope['#functions'][fun.functionName] = fun
+                fun.lambdaParentScope = scope
+                retrn(scope, makeNumberLiteral(fun.address))
             }
         )
     }

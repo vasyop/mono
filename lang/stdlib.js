@@ -124,7 +124,7 @@
         const initialRet = scope['#ret']
         const initialStackSize = todoStack.length
 
-        const parsed = modules.parser(fnName + '(' + args.join(',') + ')', 'ArithmeticExpression')
+        const parsed = modules.parser(fnName + '(' + args.join(',') + ')', 'IdentifierExpression')
         modules.evaluate(parsed, scope)
         do {
             todoStack.pop()()

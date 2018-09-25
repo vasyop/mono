@@ -12,33 +12,43 @@
     return [name, age, sub || []]
 }
 
-getHirarchy {
-    return Person('John', 35, [
+flatten(hierarchy, result) {
+    push(result, hierarchy)
+    for (i, 0, len(hierarchy[2])) {
+        flatten(hierarchy[2][i], result)
+    }
+}
+
+main {
+    let hierarchy = Person('John', 35, [
         Person('Jane', 25), 
         Person('Bob', 18, [
             Person('Rick', 44)
         ]), 
         Person('Anna', 21)
     ])
-}
-
-flatten(hierarchy, flat) {
-    push(flat, hierarchy)
-    for (i, 0, len(hierarchy[2])) {
-        flatten(hierarchy[2][i], flat)
-    }
-}
-
-isUnder30(person) { return person[1] < 30 }
-getName(person) { return person[0] }
-byAge(p1, p2) { return p2 - p1 }
-
-main {
+    
+    let isUnder30 = ~p~ p[1] < 30
+    let getName = ~p~ p[0]
+    let byAge = ~p1, p2~ p2 - p1
+    
     let people = []
-    flatten(getHirarchy(), people)
+    flatten(hierarchy, people)
     let under30 = filter(people, isUnder30)
     let namesByAge = map(sort(under30, byAge), getName)
     map(namesByAge, prints)
+    
+    let bye = byeGenerator()
+    prints(map(range(bye[1]), bye[0]))
+}
+
+byeGenerator {
+    let hello = '\nbyyyyyye!'
+    let i = 0
+    return [
+        ~~ hello[i++],
+        len(hello)
+    ]
 }</script>
     <script>
         modules = {}
