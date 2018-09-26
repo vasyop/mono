@@ -6,7 +6,7 @@ modules.parser = (sourceCode, type = 'Program') => {
     const isNativeOrStdLibFn = modules.evaluateHelpers.isNativeOrStdLibFn
     const scopeHelper = modules.parserScopeHelper()
     const declarationInfoMap = {}
-    let isLambdaEnd
+    let isLambdaHeaderEnd
     // keep track of the already declared functions
     const functionNameToLineNr = {}
 
@@ -556,9 +556,9 @@ modules.parser = (sourceCode, type = 'Program') => {
         expect('~')
         const paramNames = []
 
-        isLambdaEnd = true
+        isLambdaHeaderEnd = true
         while (!maybeConsume('~')) {
-            isLambdaEnd = false
+            isLambdaHeaderEnd = false
             const id = expect('identifier')
             scopeHelper.varDeclaration(id.text, id)
             fillDeclarationInfoMap(id)
@@ -566,23 +566,20 @@ modules.parser = (sourceCode, type = 'Program') => {
             if (currentToken.type !== '~') {
                 expect(',')
             } else {
-                isLambdaEnd = true
+                isLambdaHeaderEnd = true
             }
         }
-        isLambdaEnd = false
+        isLambdaHeaderEnd = false
 
         const lambdaName = 'lambda' + Math.floor(Math.random() * 100000)
 
-
-
-
-
-        const node = {
-            tokenInfo,
-            type: 'lambdaExpresssion',
-            functionName: lambdaName,
-            paramNames,
-            block: {
+        let block
+        let oldCurrentFunc = currentFunc
+        if (currentToken.type === '{') {
+            currentFunc = lambdaName
+            block = parseBlock()
+        } else {
+            block = {
                 tokenInfo,
                 type: 'block',
                 statements: [{ tokenInfo: currentToken, type: 'return', expression: parseArithmeticExpression(), currentFunc: lambdaName }],
@@ -590,15 +587,21 @@ modules.parser = (sourceCode, type = 'Program') => {
                 closingBraceLine: lastToken.lineNr
             }
         }
+        currentFunc = oldCurrentFunc
+
+        const node = {
+            tokenInfo,
+            type: 'lambdaExpresssion',
+            functionName: lambdaName,
+            paramNames,
+            block
+        }
 
         scopeHelper.scopeEnd()
 
         return node
 
     }
-
-
-
 
     function expect(types) {
 
@@ -665,7 +668,7 @@ modules.parser = (sourceCode, type = 'Program') => {
         setCurrentLine(getCurrentLine() + text)
 
         // inject space after if it's a certain type
-        if (typesWithSpaceAfter[type] || isLambdaEnd) {
+        if (typesWithSpaceAfter[type] || isLambdaHeaderEnd) {
             setCurrentLine(getCurrentLine() + ' ')
         }
 
