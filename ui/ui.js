@@ -359,7 +359,7 @@
         }
         return fullState
     }
-
+    resetBlinkReturnsCursorVisible()
     function resetBlinkReturnsCursorVisible() {
 
         clearInterval(cursolBlickTimerId)
