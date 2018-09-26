@@ -1566,12 +1566,12 @@
 
         let className = 'editable-variable-val '
 
-        const cacheKeyCurrentDebuggerIndex = debuggerActionIndex + '@' + funcName + '@' + funcIndex  + '@' + name
+        const cacheKeyCurrentDebuggerIndex = debuggerActionIndex + '@' + funcName + '@' + funcIndex + '@' + name
         if (val !== lastVariableValueCache[cacheKeyCurrentDebuggerIndex]) {
             className += 'editable-variable-val--changed'
         }
 
-        const cacheKeyForNextDebuggerIndex = (debuggerActionIndex + 1) + '@' + funcName + '@' + funcIndex  + '@' + name
+        const cacheKeyForNextDebuggerIndex = (debuggerActionIndex + 1) + '@' + funcName + '@' + funcIndex + '@' + name
         lastVariableValueCache[cacheKeyForNextDebuggerIndex] = val
 
         return h('div', {
@@ -1588,8 +1588,8 @@
         const text = heap[val] && ('-> ' + formatHeapArray(heap[val]))
         let className = 'heap-descriptor '
 
-        const cacheKeyCurrentDebuggerIndex = debuggerActionIndex + '@' + funcName + '@' + funcIndex  + '@' + name
-        const cacheKeyForNextDebuggerIndex = (debuggerActionIndex + 1) + '@' + funcName + '@' + funcIndex  + '@' + name
+        const cacheKeyCurrentDebuggerIndex = debuggerActionIndex + '@' + funcName + '@' + funcIndex + '@' + name
+        const cacheKeyForNextDebuggerIndex = (debuggerActionIndex + 1) + '@' + funcName + '@' + funcIndex + '@' + name
         if (text !== lastArrayValueCache[cacheKeyCurrentDebuggerIndex]) {
             className += 'val-changed'
         }
@@ -1613,8 +1613,24 @@
                     class: 'output-section ' +
                         (state.errorText ? 'output-section--error' : '')
                 },
-                state.errorText || state.outputText
+                state.errorText || state.outputText,
+                h(GithubButton)
             )
         }
+    }
+
+    function GithubButton() {
+
+        return h(
+            'div', { class: 'github-button-container' },
+            h('a', {
+                    class: "github-button",
+                    href: "https://github.com/vasyop/mono",
+                    'data-size': "large",
+                    'aria-label': "Star vasyop/mono on GitHub"
+                },
+                'GitHub'
+            )
+        )
     }
 }

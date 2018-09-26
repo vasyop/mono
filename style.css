@@ -21,7 +21,7 @@
 .app {
     height: 100%;
     display: grid;
-    grid-template: auto / 4fr 4fr 3fr;
+    grid-template: auto / 4fr 4fr 2fr;
 }
 
 .app:focus {
@@ -258,14 +258,21 @@
 }
 
 .output-section {
+    position: relative;
     box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.644);
     max-height: calc(100% - 45px);
     overflow: auto;
     font-size: 16px;
     margin: 25px 25px 0px 25px;
-    padding: 16px 35px 40px 35px;
+    padding: 30px 35px 40px 35px;
 }
 
 .output-section--error {
     color: red;
+}
+
+.github-button-container{
+    position: absolute;
+    bottom:15px;
+    right : 15px;
 }
