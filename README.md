@@ -8,7 +8,7 @@
 # What is it?
 
 - A language with debugger, editor, and heap vizualizer, made for teaching fudamental programming concepts: statements, functions, stack, heap, pointers, data structures.
-- Don't have to go through something like C (or leave the browser). 
+- C teaches you how things work, but you don't have to learn C. Mono is a simple, friendlier, but still powerful alternative, without leaving the browser. 
 - All a in the browser (chrome, and firefox with some pain, for now), sandboxed on top of js.
 - Inspired by http://www.pythontutor.com/, https://schweigi.github.io/assembler-simulator/ and https://github.com/NeilFraser/JS-Interpreter.
 
