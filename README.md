@@ -48,13 +48,13 @@
 ## The ugly
 - No `.` operator / no structs. There's only one data type and arrays will do. I admit you get tired of node[0] instead of node.left after a while.
 
-# Dependencies:
+# Dependencies
 
 - The awesome HyperApp, no JSX, all vanilla ES6.
 - vis.js (for the heap vizualizer).
 - Yup, that's it.
 
-# Full shortcut list:
+# Full shortcut list
 
 ## Debugger
 - f7: stop
