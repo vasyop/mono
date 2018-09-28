@@ -1,4 +1,4 @@
-# Demo [here](https://vasyop.github.io/mono).
+# Demo [here](https://vasyop.github.io/mono). Hit F20.
 
 # I have no programming knowledge!
 
