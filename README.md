@@ -62,7 +62,7 @@
 - f10: step over
 - f11: step into
 
-## quality of life
+## Quality of life
 - f2: rename
 - ctrl + f12: go to refinition
 - alt + f: preffify
