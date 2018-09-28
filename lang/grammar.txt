@@ -18,7 +18,7 @@ lang{
     Expression = Or_expr ("||" Or_expr)*
 
     Or_expr    = And_expr ("&&" And_expr)*
-    And_expr = Comparison_expr (("<" | ">" | "<=" | ">=") Comparison_expr)*
+    And_expr = Comparison_expr (("<" | ">" | "<=" | ">=" | "==" | "!=" ) Comparison_expr)*
     Comparison_expr   = Plus_expr (("+" | "-") Plus_expr)*
     Plus_expr  = Times_expr (("*" | "/" | "%") Times_expr)*
     Times_expr = ("-" | "!")? Final_expr
